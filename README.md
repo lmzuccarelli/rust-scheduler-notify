@@ -1,6 +1,6 @@
 # Overview
 
-A simple rust based scheduler with notify (pop-up)
+A simple rust based scheduler with notify (gui pop-up)
 
 It uses a simple yaml file to set a cron, send notification (gui pop-up), and execute commands (direct or via shell scripts)
 
@@ -27,5 +27,5 @@ execute the scheduler
 execute in the background
 
 ```
-nohup ./execute_scheduler.sh > scheduler.log &
+nohup ./scripts/execute_scheduler.sh > scheduler.log &
 ```

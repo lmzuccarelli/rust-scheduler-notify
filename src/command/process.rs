@@ -2,10 +2,19 @@ use crate::api::schema::Service;
 use crate::error::scheduler::SchedulerError;
 use custom_logger::*;
 use notify_rust::{Notification, Timeout};
+use std::path::Path;
 use std::process::Command;
 
 pub async fn execute_service(log: &Logging, service: Service) -> Result<(), SchedulerError> {
     let binary = format!("{}", service.binary);
+    if binary.contains(".sh") {
+        let exists = Path::new(&binary).exists();
+        if !exists {
+            return Err(SchedulerError::new(&format!(
+                "binary (shell script) not found",
+            )));
+        }
+    }
     let mut output = Command::new(binary);
     if service.args.is_some() {
         let s = service.clone();

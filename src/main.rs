@@ -113,6 +113,7 @@ async fn main() -> Result<(), SchedulerError> {
                 }
             }
         }
+        println!("");
         std::thread::sleep(std::time::Duration::from_millis(1000));
     }
 }

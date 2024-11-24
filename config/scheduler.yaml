@@ -12,8 +12,8 @@ spec:
       args:
         - name: ""
           value: "-la"
-    - name: "largest-files"
-      binary: "./list-largest-files.sh"
+    - name: "list-largest-files"
+      binary: "./scripts/list-largest-files.sh"
       cron: "45 * * * * *"
       notify: true
       summary: "List largest files"
@@ -22,5 +22,16 @@ spec:
       args:
         - name: ""
           value: "/home/lzuccarelli/Projects"
+    - name: "podman-clean"
+      binary: "./scripts/podman-clean.sh"
+      cron: "0 * * * * *"
+      notify: true
+      summary: "Podman clean"
+      body: "podman clean (all id's labeled 'none')"
+      icon: "firefox"
+      args:
+        - name: ""
+          value: ""
+
 
 
