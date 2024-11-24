@@ -75,6 +75,9 @@ pub struct Service {
 
     #[serde(rename = "args")]
     pub args: Option<Vec<KeyValue>>,
+
+    #[serde(rename = "notify")]
+    pub notify: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
