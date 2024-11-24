@@ -1,6 +1,7 @@
 use crate::api::schema::Service;
 use crate::error::scheduler::SchedulerError;
 use custom_logger::*;
+use notify_rust::{Notification, Timeout};
 use std::process::Command;
 
 pub async fn execute_service(log: &Logging, service: Service) -> Result<(), SchedulerError> {
@@ -12,7 +13,9 @@ pub async fn execute_service(log: &Logging, service: Service) -> Result<(), Sche
             if arg.name.len() > 0 {
                 output.arg(arg.name.clone());
             }
-            output.arg(arg.value.clone());
+            if arg.value.len() > 0 {
+                output.arg(arg.value.clone());
+            }
         }
     }
     let res = output.output();
@@ -32,6 +35,24 @@ pub async fn execute_service(log: &Logging, service: Service) -> Result<(), Sche
             )));
         }
         log.info(&response);
+        log.warn(&err_response);
+    }
+    Ok(())
+}
+
+pub fn notification(title: String, body: String, icon: String) -> Result<(), SchedulerError> {
+    let notify_res = Notification::new()
+        .summary(title.as_ref())
+        .body(&body.clone())
+        .icon(&icon)
+        .timeout(Timeout::Milliseconds(1000))
+        .show();
+
+    if notify_res.is_err() {
+        return Err(SchedulerError::new(&format!(
+            "[notification] {}",
+            notify_res.err().unwrap().to_string().to_lowercase()
+        )));
     }
     Ok(())
 }

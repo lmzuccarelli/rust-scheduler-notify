@@ -4,14 +4,23 @@ spec:
   services:
     - name: "list-files"
       binary: ls
-      cron: "45 * * * * *"
+      cron: "0 0 10 * * *"
       notify: true
       summary: "List Files"
       body: "list files in current directory"
       icon: "firefox"
-      env:
-        - name: LOG_LEVEL
-          value: TRACE
       args:
         - name: ""
           value: "-la"
+    - name: "largest-files"
+      binary: "./list-largest-files.sh"
+      cron: "45 * * * * *"
+      notify: true
+      summary: "List largest files"
+      body: "list 10 largest files and directories"
+      icon: "firefox"
+      args:
+        - name: ""
+          value: "/home/lzuccarelli/Projects"
+
+
