@@ -5,7 +5,7 @@ use notify_rust::{Notification, Timeout};
 use std::path::Path;
 use std::process::Command;
 
-pub async fn execute_service(log: &Logging, service: Service) -> Result<(), SchedulerError> {
+pub fn execute_service(log: &Logging, service: Service) -> Result<(), SchedulerError> {
     let binary = format!("{}", service.binary);
     if binary.contains(".sh") {
         let exists = Path::new(&binary).exists();
@@ -35,16 +35,29 @@ pub async fn execute_service(log: &Logging, service: Service) -> Result<(), Sche
         )));
     }
     if res.is_ok() {
-        let response = format!("{}", String::from_utf8_lossy(&res.as_ref().unwrap().stdout));
-        let err_response = format!("{}", String::from_utf8_lossy(&res.as_ref().unwrap().stderr));
+        let response = format!(
+            "{:<20} => {}",
+            service.name,
+            String::from_utf8_lossy(&res.as_ref().unwrap().stdout)
+        );
+        let err_response = format!(
+            "{:<20} => {}",
+            service.name,
+            String::from_utf8_lossy(&res.as_ref().unwrap().stderr)
+        );
         if err_response.contains("ERROR") {
             return Err(SchedulerError::new(&format!(
                 "{}",
                 String::from_utf8_lossy(&res.unwrap().stderr)
             )));
         }
-        log.info(&response);
-        log.warn(&err_response);
+        //let response: String = response.split_whitespace().collect();
+        if response.len() > 0 {
+            log.info(&response);
+        }
+        if err_response.len() > 0 {
+            log.warn(&err_response);
+        }
     }
     Ok(())
 }

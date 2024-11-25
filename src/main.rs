@@ -4,11 +4,13 @@ use crate::config::load_and_parse::{load_config, parse_yaml_config};
 use crate::error::scheduler::SchedulerError;
 use chrono::{DateTime, Duration, Local};
 use clap::Parser;
+use config::load_and_parse::get_service;
 use cron::Schedule;
 use custom_logger::{Level, Logging};
+use std::collections::HashMap;
 use std::process;
 use std::str::FromStr;
-use std::sync::mpsc;
+//use std::sync::mpsc;
 use std::thread;
 
 //use std::time::SystemTime;
@@ -60,18 +62,18 @@ async fn main() -> Result<(), SchedulerError> {
 
     let dt = Local::now();
     let offset = dt.offset().clone();
+    let mut ttf_map: HashMap<String, String> = HashMap::new();
 
-    // add mpsc channel threading
+    // simplify cron threading
     loop {
-        let (tx, rx) = mpsc::channel();
         for service in sc.spec.services.iter() {
-            let tx = tx.clone();
-            let service = service.clone();
-            thread::spawn(move || {
+            if !service.skip {
                 let crn = Schedule::from_str(&service.cron).unwrap();
-                let t = crn.upcoming(offset).take(1).nth(0).unwrap();
-                tx.send(t).unwrap();
-            });
+                let ttf = crn.upcoming(offset).take(1).nth(0).unwrap();
+                let ttf = ttf - Duration::seconds(1);
+                let ttf_formated = ttf.format("%Y-%m-%d %H:%M:%S").to_string();
+                ttf_map.insert(service.name.clone(), ttf_formated);
+            }
         }
 
         let dt = Local::now();
@@ -79,41 +81,35 @@ async fn main() -> Result<(), SchedulerError> {
         let dt_new = DateTime::<Local>::from_naive_utc_and_offset(naive_utc, offset);
         let dt_formated = dt_new.format("%Y-%m-%d %H:%M:%S");
 
-        for service in sc.spec.services.iter() {
-            let t = rx.recv().unwrap();
-            let indx = t - Duration::seconds(1);
-            let indx_fmt = indx.format("%Y-%m-%d %H:%M:%S");
+        for (k, v) in ttf_map.clone().iter() {
             log.debug(&format!(
                 "{:<20} => ttf {} : {}",
-                service.name,
-                indx_fmt.to_string(),
+                k,
+                v,
                 dt_formated.to_string()
             ));
-            if indx_fmt.to_string() == dt_formated.to_string() {
-                let res = execute_service(log, service.clone()).await;
-                if res.is_err() {
-                    log.error(&format!(
-                        "{}",
-                        res.err().as_ref().unwrap().to_string().to_lowercase()
-                    ));
-                    process::exit(1);
-                }
-                if service.notify {
-                    let n_res = notification(
-                        service.name.clone(),
-                        service.body.clone(),
-                        service.icon.clone(),
-                    );
-                    if n_res.is_err() {
-                        log.error(&format!(
-                            "{}",
-                            n_res.err().as_ref().unwrap().to_string().to_lowercase()
-                        ));
+            if v.clone() == dt_formated.to_string() {
+                let name = k.clone();
+                let config = sc.clone();
+                thread::spawn(move || {
+                    let thread_log = &Logging {
+                        log_level: Level::INFO,
+                    };
+                    let service = get_service(name, config);
+                    // no error checking
+                    if service.notify {
+                        let _ = notification(
+                            service.name.clone(),
+                            service.body.clone(),
+                            service.icon.clone(),
+                        );
                     }
-                }
+                    // fire and forget
+                    // no error checking
+                    let _ = execute_service(thread_log, service.clone());
+                });
             }
         }
-        println!("");
         std::thread::sleep(std::time::Duration::from_millis(1000));
     }
 }

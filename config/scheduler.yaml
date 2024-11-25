@@ -6,6 +6,7 @@ spec:
       binary: ls
       cron: "0 0 10 * * *"
       notify: true
+      skip: false
       summary: "List Files"
       body: "list files in current directory"
       icon: "firefox"
@@ -16,6 +17,7 @@ spec:
       binary: "./scripts/list-largest-files.sh"
       cron: "45 * * * * *"
       notify: true
+      skip: false
       summary: "List largest files"
       body: "list 10 largest files and directories"
       icon: "firefox"
@@ -26,6 +28,7 @@ spec:
       binary: "./scripts/podman-clean.sh"
       cron: "0 * * * * *"
       notify: true
+      skip: false
       summary: "Podman clean"
       body: "podman clean (all id's labeled 'none')"
       icon: "firefox"

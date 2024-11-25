@@ -78,6 +78,9 @@ pub struct Service {
 
     #[serde(rename = "notify")]
     pub notify: bool,
+
+    #[serde(rename = "skip")]
+    pub skip: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
